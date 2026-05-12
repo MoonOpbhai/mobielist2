@@ -1,0 +1,10 @@
+services:
+  - type: static
+    name: movie-list
+    buildCommand: npm run build
+    staticPublishPath: public
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
