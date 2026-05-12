@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎬 Movie List</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="ht">
+    <h1>🎬 Movie List</h1>
+    <span class="badge" id="badge">Loading...</span>
+  </div>
+  <div class="ctrl">
+    <div class="sw">
+      <span class="si">🔍</span>
+      <input type="text" id="search" placeholder="Search movies &amp; shows..." autocomplete="off" spellcheck="false">
+    </div>
+    <div class="fbs">
+      <button class="fb active" data-f="all">All</button>
+      <button class="fb" data-f="link">Has Link</button>
+      <button class="fb" data-f="nolink">No Link</button>
+    </div>
+    <button class="ab" onclick="openModal()">＋ Add Movie</button>
+  </div>
+</header>
+
+<div class="ov" id="ov">
+  <div class="modal">
+    <h2 id="modalTitle">Add New Title</h2>
+    <input type="hidden" id="editId">
+    <div class="field"><label>Movie / Show Name *</label><input type="text" id="newName" placeholder="e.g. Oppenheimer 2023"></div>
+    <div class="field"><label>Link (optional)</label><input type="text" id="newUrl" placeholder="https://..."></div>
+    <div class="ma">
+      <button class="bs" id="saveBtn" onclick="saveMovie()">Add to List</button>
+      <button class="bc" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="stats">Showing <span id="shown">0</span> of <span id="total">0</span> titles &nbsp;·&nbsp; <span id="links">0</span> with link</div>
+  <div id="loading">⏳ Loading movies...</div>
+  <div id="noRes"><p>Koi movie nahi mili 🎭</p></div>
+  <div class="ml" id="list"></div>
+</main>
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
