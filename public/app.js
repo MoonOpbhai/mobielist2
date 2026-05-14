@@ -6,6 +6,8 @@ let db = null;
 let all = [];
 let filt = 'all';
 let sectionFilt = 'all';
+let adminPassword = sessionStorage.getItem('movie_admin_password') || '';
+let isAdmin = adminPassword === 'Amonchand111';
 
 const DEFAULT_SECTIONS = [
   'Movies',
@@ -29,10 +31,11 @@ if (SUPABASE_URL.includes('PASTE_') || SUPABASE_ANON_KEY.includes('PASTE_')) {
 
 async function init() {
   try {
-    injectUIFixes();
+    injectUI();
     await loadMovies();
     document.getElementById('loading').style.display = 'none';
     renderSectionButtons();
+    renderSectionSelect();
     render();
   } catch (e) {
     document.getElementById('loading').textContent = '❌ Load nahi hua. Error: ' + e.message;
@@ -54,7 +57,7 @@ async function loadMovies() {
   }));
 }
 
-function injectUIFixes() {
+function injectUI() {
   const modal = document.querySelector('.modal');
 
   if (modal && !document.getElementById('editId')) {
@@ -79,48 +82,54 @@ function injectUIFixes() {
   }
 
   const header = document.querySelector('header');
+
+  if (header && !document.getElementById('adminBtn')) {
+    const ctrl = document.querySelector('.ctrl');
+    if (ctrl) {
+      ctrl.insertAdjacentHTML('beforeend', `<button class="admin-btn" id="adminBtn" type="button" onclick="toggleAdmin()"></button>`);
+    }
+  }
+
   if (header && !document.getElementById('sectionBar')) {
     header.insertAdjacentHTML('beforeend', '<div class="section-bar" id="sectionBar"></div>');
   }
 
-  if (!document.getElementById('sectionStyle')) {
+  if (!document.getElementById('premiumPatchStyle')) {
     const style = document.createElement('style');
-    style.id = 'sectionStyle';
+    style.id = 'premiumPatchStyle';
     style.textContent = `
       .section-bar {
         display: flex;
         gap: 7px;
         overflow-x: auto;
-        padding-top: 12px;
+        padding-top: 13px;
         scrollbar-width: none;
       }
-
-      .section-bar::-webkit-scrollbar {
-        display: none;
-      }
-
+      .section-bar::-webkit-scrollbar { display: none; }
       .sb {
         flex: 0 0 auto;
         background: rgba(255,255,255,.06);
         border: 1px solid var(--border);
         color: var(--muted);
         font-family: 'DM Sans', sans-serif;
-        font-size: .75rem;
-        font-weight: 700;
+        font-size: .74rem;
+        font-weight: 800;
         padding: 8px 12px;
         border-radius: 999px;
         cursor: pointer;
         white-space: nowrap;
         transition: all .15s ease;
       }
-
       .sb:hover,
       .sb.active {
         background: var(--accent);
         border-color: var(--accent);
         color: #000;
       }
-
+      .sb span {
+        opacity: .75;
+        margin-left: 4px;
+      }
       select {
         width: 100%;
         background: var(--surface2);
@@ -132,12 +141,28 @@ function injectUIFixes() {
         border-radius: 10px;
         outline: none;
       }
-
       select:focus {
         border-color: var(--accent);
         box-shadow: 0 0 0 3px rgba(232,200,64,.12);
       }
-
+      .admin-btn {
+        background: rgba(255,255,255,.07);
+        border: 1px solid var(--border);
+        color: var(--muted);
+        font-family: 'DM Sans', sans-serif;
+        font-size: .78rem;
+        font-weight: 800;
+        padding: 10px 14px;
+        border-radius: 10px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all .15s ease;
+      }
+      .admin-btn.on {
+        background: linear-gradient(135deg,var(--accent),#fff1a6);
+        border-color: var(--accent);
+        color: #000;
+      }
       .edit {
         flex-shrink: 0;
         background: rgba(232,200,64,.1);
@@ -153,16 +178,14 @@ function injectUIFixes() {
         justify-content: center;
         transition: all .15s;
       }
-
       .edit:hover {
         background: var(--accent);
         color: #000;
       }
-
       .tag {
         flex-shrink: 0;
         font-size: .68rem;
-        font-weight: 700;
+        font-weight: 800;
         color: var(--accent);
         background: rgba(232,200,64,.09);
         border: 1px solid rgba(232,200,64,.16);
@@ -170,26 +193,55 @@ function injectUIFixes() {
         border-radius: 999px;
         white-space: nowrap;
       }
-
       @media (max-width: 560px) {
-        .tag {
-          display: none;
-        }
-
-        .section-bar {
-          margin-left: -4px;
-          margin-right: -4px;
-        }
+        .tag { display: none; }
+        .admin-btn { padding: 10px 12px; }
       }
     `;
     document.head.appendChild(style);
   }
+
+  updateAdminButton();
+}
+
+function updateAdminButton() {
+  const btn = document.getElementById('adminBtn');
+  if (!btn) return;
+
+  btn.textContent = isAdmin ? 'Admin On' : 'Admin';
+  btn.classList.toggle('on', isAdmin);
+}
+
+function toggleAdmin() {
+  if (isAdmin) {
+    adminPassword = '';
+    isAdmin = false;
+    sessionStorage.removeItem('movie_admin_password');
+    updateAdminButton();
+    render();
+    toast('🔒 Admin off');
+    return;
+  }
+
+  const pass = prompt('Admin password daalo:');
+  if (pass === null) return;
+
+  if (pass !== 'Amonchand111') {
+    toast('❌ Wrong password', true);
+    return;
+  }
+
+  adminPassword = pass;
+  isAdmin = true;
+  sessionStorage.setItem('movie_admin_password', pass);
+  updateAdminButton();
+  render();
+  toast('🔓 Admin unlocked');
 }
 
 function getSections() {
   const found = [...new Set(all.map(m => m.section || 'Movies'))];
-  const merged = [...new Set([...DEFAULT_SECTIONS, ...found])];
-  return merged.filter(Boolean);
+  return [...new Set([...DEFAULT_SECTIONS, ...found])].filter(Boolean);
 }
 
 function renderSectionButtons() {
@@ -197,13 +249,11 @@ function renderSectionButtons() {
   if (!bar) return;
 
   const sections = getSections();
-  const total = all.length;
 
   bar.innerHTML = [
-    `<button class="sb active" data-section="all">All <span>${total}</span></button>`,
+    `<button class="sb active" data-section="all">All <span>${all.length}</span></button>`,
     ...sections.map(sec => {
       const count = all.filter(m => (m.section || 'Movies') === sec).length;
-      if (!count && !DEFAULT_SECTIONS.includes(sec)) return '';
       return `<button class="sb" data-section="${esc(sec)}">${esc(sec)} <span>${count}</span></button>`;
     })
   ].join('');
@@ -216,8 +266,6 @@ function renderSectionButtons() {
       render();
     });
   });
-
-  renderSectionSelect();
 }
 
 function renderSectionSelect(selected = 'Movies') {
@@ -225,11 +273,75 @@ function renderSectionSelect(selected = 'Movies') {
   if (!select) return;
 
   const sections = getSections();
-  select.innerHTML = sections.map(sec => {
-    return `<option value="${esc(sec)}">${esc(sec)}</option>`;
-  }).join('');
-
+  select.innerHTML = sections.map(sec => `<option value="${esc(sec)}">${esc(sec)}</option>`).join('');
   select.value = selected || 'Movies';
+}
+
+function detectSection(name) {
+  const n = String(name || '').toLowerCase();
+
+  if (
+    n.includes('anime') ||
+    n.includes('naruto') ||
+    n.includes('one piece') ||
+    n.includes('one punch') ||
+    n.includes('chainsaw') ||
+    n.includes('solo leveling') ||
+    n.includes('attack on titan') ||
+    n.includes('demon slayer') ||
+    n.includes('jjk') ||
+    n.includes('jujutsu') ||
+    n.includes('dragon ball') ||
+    n.includes('bleach') ||
+    n.includes('black clover') ||
+    n.includes('dandadan') ||
+    n.includes('death note')
+  ) return 'Anime';
+
+  if (
+    n.includes('series') ||
+    n.includes('season') ||
+    n.includes('webseries') ||
+    n.includes('web series') ||
+    n.includes('netflix') ||
+    n.includes('prime') ||
+    n.includes('hbo') ||
+    n.includes('money heist') ||
+    n.includes('breaking bad') ||
+    n.includes('better call saul') ||
+    n.includes('panchayat') ||
+    n.includes('mirzapur')
+  ) return 'Series';
+
+  if (
+    n.includes('korean') ||
+    n.includes('k-drama') ||
+    n.includes('k drama') ||
+    n.includes('oldboy') ||
+    n.includes('train to busan') ||
+    n.includes('the wailing') ||
+    n.includes('bloodhounds') ||
+    n.includes('sweet home') ||
+    n.includes('alice in borderland')
+  ) return 'Korean';
+
+  if (
+    n.includes('bengali') ||
+    n.includes('abar proloy') ||
+    n.includes('bibaho') ||
+    n.includes('kothanodi')
+  ) return 'Bengali';
+
+  if (
+    n.includes('comedy') ||
+    n.includes('21 jump street') ||
+    n.includes('horrible bosses') ||
+    n.includes('pineapple express') ||
+    n.includes('white chicks') ||
+    n.includes('tropic thunder')
+  ) return 'Comedy';
+
+  return sectionFilt !== 'all' ? sectionFilt : 'Movies';
 }
 
 function render() {
@@ -268,7 +380,6 @@ function render() {
     const id = String(m.id);
     const num = '#' + globalNo.get(id);
     const section = m.section || 'Movies';
-
     const lnk = m.url
       ? `<a class="dl" href="${esc(m.url)}" target="_blank" rel="noopener noreferrer">↗ Open</a>`
       : '';
@@ -280,8 +391,8 @@ function render() {
         <span class="name">${esc(m.name)}</span>
         <span class="tag">${esc(section)}</span>
         ${lnk}
-        <button class="edit" type="button" onclick="openEdit('${esc(id)}')" title="Edit">✎</button>
-        <button class="del" type="button" onclick="delMovie('${esc(id)}')" title="Delete">✕</button>
+        ${isAdmin ? `<button class="edit" type="button" onclick="openEdit('${esc(id)}')" title="Edit">✎</button>` : ''}
+        ${isAdmin ? `<button class="del" type="button" onclick="delMovie('${esc(id)}')" title="Delete">✕</button>` : ''}
       </div>
     `;
   }).join('');
@@ -305,12 +416,15 @@ function openModal() {
   renderSectionSelect(sectionFilt !== 'all' ? sectionFilt : 'Movies');
   document.getElementById('ov').classList.add('open');
 
-  setTimeout(() => {
-    document.getElementById('newName').focus();
-  }, 50);
+  setTimeout(() => document.getElementById('newName').focus(), 50);
 }
 
 function openEdit(id) {
+  if (!isAdmin) {
+    toast('❌ Admin login required', true);
+    return;
+  }
+
   const cleanId = String(id);
   const movie = all.find(m => String(m.id) === cleanId);
 
@@ -354,7 +468,7 @@ async function saveMovie() {
 
   const name = nameInput.value.trim();
   const url = urlInput.value.trim() || null;
-  const section = sectionInput ? sectionInput.value : 'Movies';
+  let section = sectionInput ? sectionInput.value : 'Movies';
 
   if (!name) {
     nameInput.style.borderColor = 'var(--red)';
@@ -364,23 +478,28 @@ async function saveMovie() {
     return;
   }
 
+  if (!id && (!section || section === 'Movies')) {
+    section = detectSection(name);
+  }
+
   const btn = document.getElementById('saveBtn');
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span>Saving...';
 
   try {
     if (id) {
-      const { data, error } = await db
-        .from('movies')
-        .update({ name, url, section })
-        .eq('id', id)
-        .select('id,name,url,section,created_at');
+      if (!isAdmin) throw new Error('Admin login required');
+
+      const { data, error } = await db.rpc('admin_update_movie', {
+        p_id: id,
+        p_name: name,
+        p_url: url || '',
+        p_section: section,
+        p_password: adminPassword
+      });
 
       if (error) throw error;
-
-      if (!data || !data.length) {
-        throw new Error('No row updated');
-      }
+      if (!data) throw new Error('No row updated');
 
       toast('✅ Edit ho gaya!');
     } else {
@@ -390,11 +509,12 @@ async function saveMovie() {
 
       if (error) throw error;
 
-      toast(`✅ "${name}" save ho gaya!`);
+      toast(`✅ "${name}" add ho gaya!`);
     }
 
     await loadMovies();
     renderSectionButtons();
+    renderSectionSelect(section);
     closeModal();
     render();
   } catch (e) {
@@ -406,20 +526,26 @@ async function saveMovie() {
 }
 
 async function delMovie(id) {
-  if (!confirm('Remove karo?')) return;
+  if (!isAdmin) {
+    toast('❌ Admin login required', true);
+    return;
+  }
+
+  if (!confirm('Delete karo? Ye movie permanently remove hogi.')) return;
 
   try {
-    const { error } = await db
-      .from('movies')
-      .delete()
-      .eq('id', id);
+    const { data, error } = await db.rpc('admin_delete_movie', {
+      p_id: id,
+      p_password: adminPassword
+    });
 
     if (error) throw error;
+    if (!data) throw new Error('Delete failed');
 
     all = all.filter(m => String(m.id) !== String(id));
     renderSectionButtons();
     render();
-    toast('🗑️ Remove ho gaya');
+    toast('🗑️ Delete ho gaya');
   } catch (e) {
     toast('❌ Delete nahi hua: ' + e.message, true);
     console.error(e);
@@ -449,25 +575,17 @@ document.querySelectorAll('.fb').forEach(b => {
 });
 
 document.getElementById('ov').addEventListener('click', e => {
-  if (e.target === document.getElementById('ov')) {
-    closeModal();
-  }
+  if (e.target === document.getElementById('ov')) closeModal();
 });
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    closeModal();
-  }
+  if (e.key === 'Escape') closeModal();
 });
 
 document.getElementById('newName').addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    saveMovie();
-  }
+  if (e.key === 'Enter') saveMovie();
 });
 
 document.getElementById('newUrl').addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    saveMovie();
-  }
+  if (e.key === 'Enter') saveMovie();
 });
