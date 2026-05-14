@@ -1,55 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎬 Movie List</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MOON LIST — Movie Vault</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css?v=moon-premium-3">
 </head>
 <body>
-<header>
-  <div class="ht">
-    <h1>🎬 Movie List</h1>
-    <span class="badge" id="badge">Loading...</span>
-  </div>
-  <div class="ctrl">
-    <div class="sw">
-      <span class="si">🔍</span>
-      <input type="text" id="search" placeholder="Search movies &amp; shows..." autocomplete="off" spellcheck="false">
-    </div>
-    <div class="fbs">
-      <button class="fb active" data-f="all">All</button>
-      <button class="fb" data-f="link">Has Link</button>
-      <button class="fb" data-f="nolink">No Link</button>
-    </div>
-    <button class="ab" onclick="openModal()">＋ Add Movie</button>
-  </div>
-</header>
+  <div class="bg-orb orb-a"></div>
+  <div class="bg-orb orb-b"></div>
+  <div class="bg-noise"></div>
 
-<div class="ov" id="ov">
-  <div class="modal">
-    <h2 id="modalTitle">Add New Title</h2>
-    <input type="hidden" id="editId">
-    <div class="field"><label>Movie / Show Name *</label><input type="text" id="newName" placeholder="e.g. Oppenheimer 2023"></div>
-    <div class="field"><label>Link (optional)</label><input type="text" id="newUrl" placeholder="https://..."></div>
-    <div class="ma">
-      <button class="bs" id="saveBtn" onclick="saveMovie()">Add to List</button>
-      <button class="bc" onclick="closeModal()">Cancel</button>
+  <header class="topbar">
+    <div class="hero">
+      <div>
+        <p class="eyebrow">Personal Cinema Vault</p>
+        <h1>MOON LIST</h1>
+        <p class="sub">Movies • Series • Anime • Hidden picks</p>
+      </div>
+      <span class="badge" id="badge">Loading...</span>
+    </div>
+
+    <div class="controls">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="search" placeholder="Search movies, shows, anime..." autocomplete="off" spellcheck="false">
+      </div>
+
+      <div class="filter-tabs" role="tablist">
+        <button class="fb active" data-f="all">All</button>
+        <button class="fb" data-f="link">Links</button>
+        <button class="fb" data-f="nolink">No Link</button>
+      </div>
+
+      <button class="admin-btn" id="adminBtn" type="button" onclick="toggleAdmin()">Admin</button>
+      <button class="add-btn" onclick="openModal()">＋ Add</button>
+    </div>
+
+    <div class="section-bar" id="sectionBar"></div>
+  </header>
+
+  <main>
+    <section class="stats-grid">
+      <div class="stat-card"><span id="total">0</span><small>Total</small></div>
+      <div class="stat-card"><span id="shown">0</span><small>Showing</small></div>
+      <div class="stat-card"><span id="movieCount">0</span><small>Movies</small></div>
+      <div class="stat-card"><span id="seriesCount">0</span><small>Series</small></div>
+      <div class="stat-card"><span id="animeCount">0</span><small>Anime</small></div>
+      <div class="stat-card"><span id="links">0</span><small>Links</small></div>
+    </section>
+
+    <div id="loading" class="state">⏳ Loading movie vault...</div>
+    <div id="noRes" class="state">No title found 🎭</div>
+    <div class="movie-list" id="list"></div>
+  </main>
+
+  <div class="ov" id="ov">
+    <div class="modal">
+      <input type="hidden" id="editId">
+      <h2 id="modalTitle">Add New Title</h2>
+
+      <div class="field">
+        <label>Movie / Show Name *</label>
+        <input type="text" id="newName" placeholder="e.g. Interstellar 2014">
+      </div>
+
+      <div class="field">
+        <label>Link optional</label>
+        <input type="text" id="newUrl" placeholder="https://...">
+      </div>
+
+      <div class="field">
+        <label>Section</label>
+        <select id="newSection"></select>
+      </div>
+
+      <div class="modal-actions">
+        <button class="save-btn" id="saveBtn" onclick="saveMovie()">Add to List</button>
+        <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+      </div>
     </div>
   </div>
-</div>
 
-<main>
-  <div class="stats">Showing <span id="shown">0</span> of <span id="total">0</span> titles &nbsp;·&nbsp; <span id="links">0</span> with link</div>
-  <div id="loading">⏳ Loading movies...</div>
-  <div id="noRes"><p>Koi movie nahi mili 🎭</p></div>
-  <div class="ml" id="list"></div>
-</main>
-<div id="toast"></div>
+  <div id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js"></script>
-<script src="app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./config.js?v=moon-premium-3"></script>
+  <script src="./app.js?v=moon-premium-3"></script>
 </body>
-</html>
+  </html>
